@@ -36,7 +36,8 @@ app.post('/keygen', async (req, res) => {
 
   switch (data.attributes.event) {
     case 'user.created': {
-      const user = JSON.parse(data.attributes.payload)
+      const payload = JSON.parse(data.attributes.payload)
+      const user = payload.data
 
       // Handle new user creation - you could e.g. create a new "customer" account
       // to handle future billing events, or you could simply keep your internal
@@ -45,7 +46,8 @@ app.post('/keygen', async (req, res) => {
       break
     }
     case 'user.deleted': {
-      const user = JSON.parse(data.attributes.payload)
+      const payload = JSON.parse(data.attributes.payload)
+      const user = payload.data
 
       // Handle deletion events for your users - you could e.g. cancel up any
       // subscriptions/invoices for the current user, or simply keep your
@@ -54,9 +56,9 @@ app.post('/keygen', async (req, res) => {
       break
     }
     case 'user.password-reset': {
-      const reset = JSON.parse(data.attributes.payload)
-      const { passwordResetToken } = reset.meta
-      const user = reset.data
+      const payload = JSON.parse(data.attributes.payload)
+      const { passwordResetToken } = payload.meta
+      const user = payload.data
 
       // Email the password reset token to the current user for password reset
       // fulfillment. This event is only sent if you specify `deliver = false`
@@ -65,7 +67,8 @@ app.post('/keygen', async (req, res) => {
       break
     }
     case 'license.created': {
-      const license = JSON.parse(data.attributes.payload)
+      const payload = JSON.parse(data.attributes.payload)
+      const license = payload.data
       const user = license.relationships.user.data
 
       // Handle billing the current user for their new license, or keep
@@ -74,7 +77,8 @@ app.post('/keygen', async (req, res) => {
       break
     }
     case 'license.deleted': {
-      const license = JSON.parse(data.attributes.payload)
+      const payload = JSON.parse(data.attributes.payload)
+      const license = payload.data
       const user = license.relationships.user.data
 
       // Handle crediting the user for their deleted license, or simply
