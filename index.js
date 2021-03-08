@@ -1,37 +1,43 @@
 // Be sure to add these ENV variables!
 const {
   KEYGEN_ACCOUNT_ID,
-  KEYGEN_TOKEN,
+  KEYGEN_PUBLIC_KEY,
   PORT = 8080
 } = process.env
 
-const fetch = require('node-fetch')
+const crypto = require('crypto')
 const express = require('express')
 const bodyParser = require('body-parser')
 const morgan = require('morgan')
 const app = express()
 
-app.use(bodyParser.json({ type: 'application/vnd.api+json' }))
-app.use(bodyParser.json({ type: 'application/json' }))
+// FIXME(ezekg) Store a reference to the plaintext request body
+const setPlaintextBody = (req, res, buf) =>
+  req.plaintext = buf != null ? buf.toString() : null
+
+app.use(bodyParser.json({ type: 'application/vnd.api+json', verify: setPlaintextBody }))
+app.use(bodyParser.json({ type: 'application/json', verify: setPlaintextBody }))
 app.use(morgan('combined'))
 
-// Listen for webhook events from Keygen which can be created by client-side
-// events such as: license creation, license deletion, password resets, etc.
+// Listen for webhook event notifications sent from Keygen
 app.post('/keygen', async (req, res) => {
-  const { data: { id } } = req.body
+  const { data } = req.body
 
-  // Fetch the webhook to validate it and get its most up-to-date state
-  const event = await fetch(`https://api.keygen.sh/v1/accounts/${KEYGEN_ACCOUNT_ID}/webhook-events/${id}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${KEYGEN_TOKEN}`,
-      'Accept': 'application/vnd.api+json'
+  // Verify the authenticity of the webhook event
+  const sig = req.headers['x-signature']
+  try {
+    const verifier = crypto.createVerify('sha256')
+    verifier.write(req.plaintext)
+    verifier.end()
+
+    const v = verifier.verify(KEYGEN_PUBLIC_KEY, sig, 'base64')
+    if (!v) {
+      throw new Error('Invalid signature')
     }
-  })
+  } catch (e) {
+    console.error(`Signature did not match: webhook_event_id=${data.id} signature=${sig}`, e)
 
-  const { data, errors } = await event.json()
-  if (errors) {
-    return res.sendStatus(200) // Webhook event does not exist
+    return res.sendStatus(422)
   }
 
   switch (data.attributes.event) {

@@ -14,12 +14,13 @@ First up, configure a few environment variables:
 # Your Keygen account ID.
 export KEYGEN_ACCOUNT_ID="YOUR_KEYGEN_ACCOUNT_ID"
 
-# Your Keygen authentication token. This may be an admin token, or
-# a product token, depending on how you prefer to set things up. An
-# admin token will have access to events for all of your products,
-# while a product token can only access events related to that
-# particular product.
-export KEYGEN_TOKEN="YOUR_KEYGEN_TOKEN"
+# Your Keygen account's public key (make sure it is *exact* - newlines and all)
+export KEYGEN_PUBLIC_KEY=$(printf %b \
+  '-----BEGIN PUBLIC KEY-----\n' \
+  'zdL8BgMFM7p7+FGEGuH1I0KBaMcB/RZZSUu4yTBMu0pJw2EWzr3CrOOiXQI3+6bA\n' \
+  # …
+  'efK41Ml6OwZB3tchqGmpuAsCEwEAaQ==\n' \
+  '-----END PUBLIC KEY-----')
 ```
 
 You can either run each line above within your terminal session before
